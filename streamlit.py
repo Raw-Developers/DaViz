@@ -3,9 +3,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import altair as alt
+from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -33,6 +33,7 @@ df.columns = df.columns.str.replace(' ', '_')
 df.columns = df.columns.str.replace('\n', '_')
 df.columns = df.columns.str.replace('\t', '_')
 
+#The user has options to do different things: either plot or predict.
 task = st.sidebar.selectbox("What do you want?", ["Intro","Data Plotting","Data Prediction"])
 if task == "Intro":
     st.write("This page plots as well as predicts the values using your dataset.")
@@ -87,19 +88,19 @@ elif task == "Data Plotting":
         pass
 
 
-
+#This is the starting of the prediction code.
 elif task == "Data Prediction":
     features = st.sidebar.multiselect("Please select all the relevant features:", list(df.columns))
     df.fillna(df.mean(), inplace=True)
     df = df.reset_index(drop=True)
     target = st.sidebar.selectbox("Please select the target:", list(df.columns))
-    from sklearn import preprocessing
+    
+    #Here we transform the columns with str values into float type.
     le = preprocessing.LabelEncoder()
     for i in features:
         if isinstance(df[i].iloc[0], str):
             df[i] = le.fit_transform(df[i])
         
-    #df[target] = le.fit_transform(df[target])
     y = df[target]
     st.write(df[features])
     x=np.empty((len(y),len(features)))
@@ -109,6 +110,8 @@ elif task == "Data Prediction":
             x[q][p]=d[q]    
 
     np.unique(x,axis=1)
+
+    #The famous train test split function.
     x_train, x_test, y_train, y_test = train_test_split(x,y, test_size = 0.2, random_state = 5)
     x_new=[]
     for i in features:
@@ -116,6 +119,7 @@ elif task == "Data Prediction":
         x_new.append(a)
     x_new=[x_new]
 
+    #Here the user selects the model to predict.
     try:
         modeltype=st.sidebar.selectbox("Please select a model type:", ["Logistic Regression","Decision Tree","Random Forest","KNeighbors Classifier"])
         if modeltype == "Logistic Regression":
@@ -129,7 +133,8 @@ elif task == "Data Prediction":
 
         elif modeltype == "KNeighbors Classifier":
             model = KNeighborsClassifier(n_neighbors=1)
-    
+
+        #Finally a submit button to predict and display the accuracy and prediction.
         submit = st.sidebar.button(label='Go')
         if submit:
             model.fit(x_train,y_train)
